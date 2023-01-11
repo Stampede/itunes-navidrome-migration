@@ -15,6 +15,9 @@ I am not sure how it would work on other platforms.
 2. Download `itunesPlaylistMigrator.py`, `itunestoND.py` and `requirements.txt` and save to a folder.
 3. `$ pip3 install -r requirements.txt`
 
+### Not comfortable with Python?
+Put your database files in a drop box or something and I will migrate your iTunes library for $15. Email me at ylh9hhiaq@mozmail.com. For playlists, I'd send you back a web page with your playlists listed and hotlinked. If you want to keep the playlist, just click on its link and it will get added to Navidrome.
+
 ## How to use
 ### Preparing your library
 Set up your Navidrome server and copy all the folders and music files from your iTunes library to the Navidrome library. Navidrome will build its own database from scratch based on the file metadata. 
