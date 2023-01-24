@@ -111,7 +111,14 @@ for it_song_entry in songs:
         print(f'{counter:,} files parsed so far of {song_count:,} total songs.')
 
     # chop off first part of IT path so we can correlate it to the entry in the ND database
+    
+    if it_song_entry.find('key', string='Location') == None: 
+        continue
+
     song_path = unquote(it_song_entry.find('key', string='Location').next_sibling.text)
+    if not song_path.startswith(it_root_music_path):  # excludes non-local content
+        continue   
+
     song_path = re.sub(it_root_music_path, '', song_path)
 
     try:
