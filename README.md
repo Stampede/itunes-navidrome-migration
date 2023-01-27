@@ -25,7 +25,7 @@ Put your database files in a drop box or something and I will migrate your iTune
 ### Preparing your library
 Set up your Navidrome server and copy all the folders and music files from your iTunes library to the Navidrome library. Navidrome will build its own database from scratch based on the file metadata. 
 
-The most important thing is that you keep the same directory structure between iTunes and Navidrome libraries. Do not rename, delete or move any files or directories. The script uses the file paths to sync the databases. If you want to reorganize the file structure, do it after you have moved over all your itunes data.
+The most important thing is that you keep the same directory structure between iTunes and Navidrome libraries. Do not rename, delete or move any files or directories. The script uses the file paths to sync the databases. ~~If you want to reorganize the file structure, do it after you have moved over all your itunes data.~~ Navidrome also uses each file's path as a unique identifier in the database. So that means you are stuck with whatever folder structure you have already. Yes you *can* change the folder structure, but then this script will not work. And moving music files after they have been established in Navidrome will cause Navidrome to think they are new files, so you will lose your ratings and play history.
 
 That said, before running the scripts, I found it very helpful to use Music Brainz Picard to clean up file metadata **without moving any files**. Use Navidrome for a week or so and if you have problems finding albums or songs, use Picard or Beets or something to improve the metadata tags for the files that are acting funny.
 
