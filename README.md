@@ -10,9 +10,8 @@ These scripts were tested on Linux using a Library.xml file that came from iTune
 
 I am not sure how it would work on other platforms.
 
-## Known issues
-1. The song rating script crashes if you have iTunes cloud music in your database. I will fix this if I can get a sample of a `Library.xml` file containing cloud entries. Email me at ylh9hhiaq@mozmail.com if you can provide one.
-2. If the iTunes database has a star rating for an entry but no play count or play date, then it will not migrate that rating to Navidrome. I'm not sure if this is a common enough situation to bother fixing in the ratings migration script. Let me know if it affects you.
+## Known issue
+1. If the iTunes database has a star rating for an entry but no play count or play date, then it will not migrate that rating to Navidrome. I'm not sure if this is a common enough situation to bother fixing in the ratings migration script. Let me know if it affects you.
 
 ## Installation
 1. You can create a Python virtual environment, or not.
