@@ -79,7 +79,7 @@ while _ != 'proceed':
 nddb_path = get_db_path('Navidrome database')
 itdb_path = get_db_path('Itunes database')
 print('\nParsing Itunes library. This may take a while.')
-with open(itdb_path, 'r') as f: soup = BeautifulSoup(f, 'lxml-xml')
+with open(itdb_path, 'r', encoding="utf-8") as f: soup = BeautifulSoup(f, 'lxml-xml')
 
 it_root_music_path = unquote(soup.find('key', text='Music Folder').next_sibling.text)
 # example output of previous line: 'file://localhost/C:/Users/REDACTED/Music/iTunes/iTunes Music/'
