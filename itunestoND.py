@@ -78,13 +78,24 @@ def update_created_at_fields(dictionary_with_stats):
         conn.commit()
     conn.close()
 
-nddb_path = "navidrome.db"
-itdb_path = 'Library.xml'
+_ = None
+while _ != 'proceed':
+    print()
+    print('This script will migrate certain data from your ITunes library to your Navidrome database.', 
+        "Back up all your data in case it doesn't work properly on your setup. NO WARRANTIES. NO PROMISES.", 
+        "The script will DELETE existing data you have in your Navidrome database so it can start \"fresh\".", sep='\n')
+    print()
+
+    _ = input('Type PROCEED to continue, or Q to quit: ').lower()
+
+    if _ == 'q': print('Good bye.'); sys.exit(0)
+
+nddb_path = get_db_path('Navidrome database')
+itdb_path = get_db_path('Itunes database')
 print('\nParsing Itunes library. This may take a while.')
 with open(itdb_path, 'r', encoding="utf-8") as f: soup = BeautifulSoup(f, 'lxml-xml')
 
 it_root_music_path = unquote(soup.find('key', text='Music Folder').next_sibling.text)
-it_root_music_path = "file://localhost/C:/Users/sterl/Music/Music/"
 # example output of previous line: 'file://localhost/C:/Users/REDACTED/Music/iTunes/iTunes Music/'
 
 songs = soup.dict.dict.find_all('dict') # yields result set of media files to loop through
