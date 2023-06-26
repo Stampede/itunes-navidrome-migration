@@ -28,15 +28,17 @@ def determine_userID(nd_p):
     conn.close()
     return users[0][0]
 
-def update_playstats(d1, id, playcount, playdate, rating=0, loved=0):
+def update_playstats(d1, id, playcount, playdate, dateadded, rating=0, loved=0):
     d1.setdefault(id, {})
     d1[id].setdefault('play count', 0)
     d1[id].setdefault('play date', datetime.datetime.fromordinal(1))
+    d1[id].setdefault('date added', datetime.datetime.fromordinal(1))
     d1[id]['play count'] += playcount
     d1[id]['rating'] = rating
     d1[id]['loved'] = loved
 
     if playdate > d1[id]['play date']: d1[id].update({'play date': playdate})
+    if dateadded > d1[id]['date added']: d1[id].update({'date added': dateadded})
 
 def generate_annotation_id(): # random hex number 32 characters long
     character_pool = string.hexdigits[:16]
@@ -66,8 +68,15 @@ def write_to_annotation(dictionary_with_stats, entry_type):
         # cur.executemany('INSERT INTO consumers VALUES (?,?,?,?)', purchases)
         # cur.execute("INSERT INTO consumers VALUES (1,'John Doe','john.doe@xyz.com','A')")
 
-def update_created_at_fields():
-    return
+def update_created_at_fields(dictionary_with_stats):
+    conn = sqlite3.connect(nddb_path)
+    cur = conn.cursor()
+
+    for item_id in dictionary_with_stats:
+        this_entry = dictionary_with_stats[item_id]
+        cur.execute('UPDATE media_file SET created_at = ? WHERE id = ?', (this_entry['date added'], item_id))
+        conn.commit()
+    conn.close()
 
 nddb_path = "navidrome.db"
 itdb_path = 'Library.xml'
@@ -141,12 +150,13 @@ for it_song_entry in songs:
         play_count = int(it_song_entry.find('key', string='Play Count').next_sibling.text)
         last_played = it_song_entry.find('key', string='Play Date UTC').next_sibling.text[:-1] # slice off the trailing 'Z'
         last_played = datetime.datetime.strptime(last_played, '%Y-%m-%dT%H:%M:%S') # convert from string to datetime object. Example string: '2020-01-19T02:24:14Z'
+        date_added = it_song_entry.find('key', string='Date Added').next_sibling.text[:-1]
+        date_added = datetime.datetime.strptime(date_added, '%Y-%m-%dT%H:%M:%S')
     except AttributeError: continue
 
-    update_playstats(artists, artist_id, play_count, last_played)
-    update_playstats(albums, album_id, play_count, last_played)
-    update_playstats(files, song_id, play_count, last_played, rating=song_rating, loved=loved)
-    
+    update_playstats(artists, artist_id, play_count, last_played, date_added)
+    update_playstats(albums, album_id, play_count, last_played, date_added)
+    update_playstats(files, song_id, play_count, last_played, date_added, rating=song_rating, loved=loved) 
 
 conn.close()
 
@@ -157,6 +167,8 @@ write_to_annotation(files, 'media_file')
 print('Done writing music file records to database.')
 write_to_annotation(albums, 'album')
 print('Album records saved to database.')
+
+update_created_at_fields(files)
 
 with open('IT_file_correlations.py', 'w') as f:
     f.write('# Following python dictionary correlates the itunes integer ID to the Navidrome file ID for each song.\n')
