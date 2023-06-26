@@ -28,12 +28,13 @@ def determine_userID(nd_p):
     conn.close()
     return users[0][0]
 
-def update_playstats(d1, id, playcount, playdate, rating=0):
+def update_playstats(d1, id, playcount, playdate, rating=0, loved=0):
     d1.setdefault(id, {})
     d1[id].setdefault('play count', 0)
     d1[id].setdefault('play date', datetime.datetime.fromordinal(1))
     d1[id]['play count'] += playcount
     d1[id]['rating'] = rating
+    d1[id]['loved'] = loved
 
     if playdate > d1[id]['play date']: d1[id].update({'play date': playdate})
 
@@ -53,8 +54,9 @@ def write_to_annotation(dictionary_with_stats, entry_type):
         play_count = this_entry['play count']
         play_date = this_entry['play date'].strftime('%Y-%m-%d %H:%M:%S') # YYYY-MM-DD 24:mm:ss
         rating = this_entry['rating']
+        loved = this_entry['loved']
 
-        annotation_entries.append((generate_annotation_id(), userID, item_id, entry_type, play_count, play_date, rating, 0, None))
+        annotation_entries.append((generate_annotation_id(), userID, item_id, entry_type, play_count, play_date, rating, loved, None))
 
     conn = sqlite3.connect(nddb_path)
     cur = conn.cursor()
@@ -64,24 +66,16 @@ def write_to_annotation(dictionary_with_stats, entry_type):
         # cur.executemany('INSERT INTO consumers VALUES (?,?,?,?)', purchases)
         # cur.execute("INSERT INTO consumers VALUES (1,'John Doe','john.doe@xyz.com','A')")
 
-_ = None
-while _ != 'proceed':
-    print()
-    print('This script will migrate certain data from your ITunes library to your Navidrome database.', 
-        "Back up all your data in case it doesn't work properly on your setup. NO WARRANTIES. NO PROMISES.", 
-        "The script will DELETE existing data you have in your Navidrome database so it can start \"fresh\".", sep='\n')
-    print()
+def update_created_at_fields():
+    return
 
-    _ = input('Type PROCEED to continue, or Q to quit: ').lower()
-
-    if _ == 'q': print('Good bye.'); sys.exit(0)
-
-nddb_path = get_db_path('Navidrome database')
-itdb_path = get_db_path('Itunes database')
+nddb_path = "navidrome.db"
+itdb_path = 'Library.xml'
 print('\nParsing Itunes library. This may take a while.')
 with open(itdb_path, 'r', encoding="utf-8") as f: soup = BeautifulSoup(f, 'lxml-xml')
 
 it_root_music_path = unquote(soup.find('key', text='Music Folder').next_sibling.text)
+it_root_music_path = "file://localhost/C:/Users/sterl/Music/Music/"
 # example output of previous line: 'file://localhost/C:/Users/REDACTED/Music/iTunes/iTunes Music/'
 
 songs = soup.dict.dict.find_all('dict') # yields result set of media files to loop through
@@ -134,6 +128,10 @@ for it_song_entry in songs:
     it_song_ID = int(it_song_entry.find('key', string='Track ID').next_sibling.text)
     songID_correlation.update({it_song_ID: song_id})
     
+    loved = it_song_entry.find('key', string='Loved')
+    if(loved != None): loved = 1
+    else: loved = 0
+    
     try:    # get rating, play count & date from Itunes
         song_rating = int(it_song_entry.find('key', string='Rating').next_sibling.text)
         song_rating = int(song_rating / 20)
@@ -147,8 +145,7 @@ for it_song_entry in songs:
 
     update_playstats(artists, artist_id, play_count, last_played)
     update_playstats(albums, album_id, play_count, last_played)
-    update_playstats(files, song_id, play_count, last_played, rating=song_rating)
-
+    update_playstats(files, song_id, play_count, last_played, rating=song_rating, loved=loved)
     
 
 conn.close()
