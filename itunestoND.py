@@ -7,6 +7,7 @@ import sys, sqlite3, datetime, re, string, pprint, random
 from pathlib import Path
 from urllib.parse import unquote
 from bs4 import BeautifulSoup
+import unicodedata
 
 def get_db_path(dbID):
     while True:
@@ -49,7 +50,7 @@ def write_to_annotation(dictionary_with_stats, entry_type):
     annotation_entries = []
     for item_id in dictionary_with_stats:
         this_entry = dictionary_with_stats[item_id]
-        
+
         play_count = this_entry['play count']
         play_date = this_entry['play date'].strftime('%Y-%m-%d %H:%M:%S') # YYYY-MM-DD 24:mm:ss
         rating = this_entry['rating']
@@ -67,8 +68,8 @@ def write_to_annotation(dictionary_with_stats, entry_type):
 _ = None
 while _ != 'proceed':
     print()
-    print('This script will migrate certain data from your ITunes library to your Navidrome database.', 
-        "Back up all your data in case it doesn't work properly on your setup. NO WARRANTIES. NO PROMISES.", 
+    print('This script will migrate certain data from your ITunes library to your Navidrome database.',
+        "Back up all your data in case it doesn't work properly on your setup. NO WARRANTIES. NO PROMISES.",
         "The script will DELETE existing data you have in your Navidrome database so it can start \"fresh\".", sep='\n')
     print()
 
@@ -111,34 +112,49 @@ for it_song_entry in songs:
         print(f'{counter:,} files parsed so far of {song_count:,} total songs.')
 
     # chop off first part of IT path so we can correlate it to the entry in the ND database
-    
-    if it_song_entry.find('key', string='Location') == None: 
+
+    if it_song_entry.find('key', string='Location') == None:
         continue
 
     song_path = unquote(it_song_entry.find('key', string='Location').next_sibling.text)
     if not song_path.startswith(it_root_music_path):  # excludes non-local content
-        continue   
+        continue
 
     song_path = re.sub(it_root_music_path, '', song_path)
 
-    try:
-        cur.execute('SELECT id, artist_id, album_id FROM media_file WHERE path LIKE "%' + song_path + '"')
-        song_id, artist_id, album_id = cur.fetchone()
-    except TypeError:
+    # the file path might use different unicode normalization than the database
+    # there seems to not be a single one that works for all files, so we'll try
+    # all of them until we find one that works
+    found = False
+    for x in ['NFC', 'NFD', 'NFKC', 'NFKD']:
+        try:
+            song_path = unicodedata.normalize(x, song_path)
+        except UnicodeDecodeError:
+            continue
+        try:
+            cur.execute('SELECT id, artist_id, album_id FROM media_file WHERE path LIKE "%' + song_path + '"')
+            song_id, artist_id, album_id = cur.fetchone()
+            found = True
+            break
+        except TypeError:
+            continue
+
+    if not found:
         print(f"Error while parsing {song_path}. Navidrome does not acknowledge that file's existence.")
         print("Maybe Navidrome doesn't like the extension? Skipping.")
         continue
 
 
+
     # correlate Itunes ID with Navidrome ID (for use in a future script)
     it_song_ID = int(it_song_entry.find('key', string='Track ID').next_sibling.text)
     songID_correlation.update({it_song_ID: song_id})
-    
+
     try:    # get rating, play count & date from Itunes
         song_rating = int(it_song_entry.find('key', string='Rating').next_sibling.text)
         song_rating = int(song_rating / 20)
     except AttributeError: song_rating = 0 # rating = 0 (unrated) if it's not rated in itunes
-        
+
     try:
         play_count = int(it_song_entry.find('key', string='Play Count').next_sibling.text)
         last_played = it_song_entry.find('key', string='Play Date UTC').next_sibling.text[:-1] # slice off the trailing 'Z'
@@ -149,7 +165,7 @@ for it_song_entry in songs:
     update_playstats(albums, album_id, play_count, last_played)
     update_playstats(files, song_id, play_count, last_played, rating=song_rating)
 
-    
+
 
 conn.close()
 
