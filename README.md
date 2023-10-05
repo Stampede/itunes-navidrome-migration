@@ -25,7 +25,7 @@ Put your database files in a drop box or something and I will migrate your iTune
 
 ## How to use
 ### Preparing your library
-Set up your Navidrome server and copy all the folders and music files from your iTunes library to the Navidrome library. Navidrome will build its own database from scratch based on the file metadata. 
+Set up your Navidrome server and copy all the folders and music files from your iTunes library to the Navidrome library. Navidrome will build its own database from scratch based on the file metadata.
 
 The most important thing is that you keep the same directory structure between iTunes and Navidrome libraries. Do not rename, delete or move any files or directories. The script uses the file paths to sync the databases. If you want to reorganize the file structure, do it after you have moved over all your itunes data.
 
@@ -54,6 +54,13 @@ I wrote this as an afterthought, so these instructions are a little weird. This 
 4. Run the playlist migrator script: `$ python3 itunesPlaylistMigrator.py`. If your working directory is not the same where `Library.xml` is stored, you will be prompted for the path to `Library.xml`.
 5. Answer the prompts for your Navidrome username and password.
 6. The script will search for playlists from your iTunes library and prompt if you want to move them to Navidrome.
+
+### Migrating iTunes Song Metadata
+This script will add metadata to your songs. iTunes doesn't care about metadata in files and stores everything in it's library. Navidrome uses the metadata in the files to build its database. This script will add the metadata from iTunes to the files.
+
+1. Backup your music files.
+2. Run the script: `$ python3 itunesSongMetadata.py`
+3. Sync your files again with Navidrome if you executed this script after you already migrated your library or targeted a different directory.
 
 ## Acknowledgments
 Thanks to the Navidrome developers for their hard work and for putting up with my basic questions on the Discord chat as I worked on this script.
